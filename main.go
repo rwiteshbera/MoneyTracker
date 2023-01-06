@@ -2,12 +2,14 @@ package main
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
-	routes "github.com/rwiteshbera/MoneyTracker/routes"
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
+	"github.com/rwiteshbera/MoneyTracker/middlewares"
+	routes "github.com/rwiteshbera/MoneyTracker/routes"
 )
 
 func main() {
@@ -21,6 +23,7 @@ func main() {
 
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.New()
+	router.Use(middlewares.CorsMiddleware())
 	router.Use(gin.Recovery())
 
 	router.GET("/", func(c *gin.Context) {

@@ -8,7 +8,7 @@ import (
 
 func Authenticate() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		authToken := c.Request.Header.Get("token")
+		authToken := c.Request.Header.Get("Authorization")
 
 		if authToken == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{

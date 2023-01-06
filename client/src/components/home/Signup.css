@@ -1,0 +1,14 @@
+.register_form{
+    width: 40vw;
+}
+
+.info_text {
+    text-align: center;
+}
+
+.error_div #error_message {
+    text-align: center;
+    font-size: 1rem;
+    color: red;
+    font-weight: 600;
+}

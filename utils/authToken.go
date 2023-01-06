@@ -11,12 +11,12 @@ import (
 type SignedUserDetails struct {
 	FirstName   string
 	LastName    string
-	PhoneNumber uint64
+	PhoneNumber string
 	jwt.RegisteredClaims
 }
 
 // Generate JWT Token
-func GenerateToken(firstname string, lastname string, phonenumber uint64) (string, error) {
+func GenerateToken(firstname string, lastname string, phonenumber string) (string, error) {
 	if err := godotenv.Load(".env"); err != nil {
 		return "", err
 	}

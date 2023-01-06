@@ -10,17 +10,9 @@ import (
 
 func CreateTransaction() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		createdBy, _ := c.Get("phoneNumber")
 		var transaction models.Transaction
 
-		i, ok := createdBy.(uint64)
-		if !ok {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "something went wrong"})
-			return
-		}
-		transaction.CreatedBy = i
-		transaction.Id = (uint64(time.Now().Unix()) | transaction.CreatedBy)
-
+		transaction.Id = uint64(time.Now().Unix())
 		if err := c.BindJSON(&transaction); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -32,7 +24,7 @@ func CreateTransaction() gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err1.Error()})
 			return
 		}
-		statement, err2 := database.Prepare("CREATE TABLE IF NOT EXISTS transactions (tid INTEGER NOT NULL,amount INTEGER NOT NULL,createdBy INTEGER NOT NULL,FOREIGN KEY (createdBy) REFERENCES users(phoneNumber) ON DELETE CASCADE)")
+		statement, err2 := database.Prepare("CREATE TABLE IF NOT EXISTS transactions (tid INTEGER NOT NULL,amount INTEGER NOT NULL,createdBy TEXT NOT NULL,FOREIGN KEY (createdBy) REFERENCES users(phoneNumber) ON DELETE CASCADE)")
 		if err2 != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err2.Error()})
 			return

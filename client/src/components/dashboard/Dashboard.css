@@ -1,0 +1,20 @@
+.username_heading{
+    text-align: center;
+}
+
+#input_amount{
+    width: 15em;
+}
+
+.amount_box{
+    margin-left: 35%;
+    display: flex;
+}
+.amount_box input {
+    margin-right: 1em;
+}
+
+#logout_btn{
+    position: absolute;
+    right: 5%;
+}

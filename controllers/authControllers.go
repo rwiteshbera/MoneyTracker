@@ -8,6 +8,7 @@ import (
 	"github.com/rwiteshbera/MoneyTracker/models"
 	"github.com/rwiteshbera/MoneyTracker/utils"
 	"net/http"
+	"strings"
 )
 
 func Signup() gin.HandlerFunc {
@@ -25,7 +26,7 @@ func Signup() gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		statement, err := database.Prepare("CREATE TABLE IF NOT EXISTS users (firstName TEXT, lastName TEXT, phoneNumber INTEGER PRIMARY , password TEXT)")
+		statement, err := database.Prepare("CREATE TABLE IF NOT EXISTS users (firstName TEXT, lastName TEXT, phoneNumber TEXT PRIMARY KEY , password TEXT)")
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
@@ -53,8 +54,14 @@ func Signup() gin.HandlerFunc {
 
 		_, err = statement.Exec(user.FirstName, user.LastName, user.PhoneNumber, user.Password)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
+			// If phone number exists
+			if strings.Contains(err.Error(), "UNIQUE constraint failed") {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Phone number already exists"})
+				return
+			} else {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
 		}
 
 		c.JSON(http.StatusOK, gin.H{"message": "registration successful!"})
@@ -67,6 +74,10 @@ func Login() gin.HandlerFunc {
 
 		if err := c.BindJSON(&user); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		if user.PhoneNumber == "" || user.Password == "" {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "something went wrong!"})
 			return
 		}
 
@@ -110,6 +121,6 @@ func Login() gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{"token": token})
+		c.JSON(http.StatusOK, gin.H{"token": token, "firstname": savedUser.FirstName, "lastname": savedUser.LastName, "phone": savedUser.PhoneNumber})
 	}
 }
