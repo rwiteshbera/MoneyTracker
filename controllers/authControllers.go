@@ -25,7 +25,7 @@ func Signup() gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		statement, err := database.Prepare("CREATE TABLE IF NOT EXISTS users (firstName TEXT, lastName TEXT, phoneNumber INTEGER PRIMARY KEY, password TEXT)")
+		statement, err := database.Prepare("CREATE TABLE IF NOT EXISTS users (firstName TEXT, lastName TEXT, phoneNumber INTEGER PRIMARY , password TEXT)")
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return

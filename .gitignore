@@ -1,3 +1,5 @@
 tmp
 *.exe
 .env
+*.db
+.idea
