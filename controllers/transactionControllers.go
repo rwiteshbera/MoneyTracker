@@ -132,6 +132,7 @@ func ShowTransactions() gin.HandlerFunc {
 // Add member in a transaction
 func AddMember() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		userPhoneNumber, _ := c.Get("phoneNumber")
 		var newMember models.Member
 
 		if err := c.BindJSON(&newMember); err != nil {
@@ -145,7 +146,7 @@ func AddMember() gin.HandlerFunc {
 			return
 		}
 
-		statement, err := database.Prepare("CREATE TABLE IF NOT EXISTS members (phoneNumber INTEGER NOT NULL,amountToBePaid INTEGER NOT NULL, transactionId INTEGER NOT NULL,  FOREIGN KEY (phoneNumber) REFERENCES users(phoneNumber) ON DELETE CASCADE, FOREIGN KEY (transactionId) REFERENCES transactions(tid) ON DELETE CASCADE, PRIMARY KEY(phoneNumber, transactionId))")
+		statement, err := database.Prepare("CREATE TABLE IF NOT EXISTS members (phoneNumber INTEGER NOT NULL,amountToBePaid INTEGER NOT NULL,transactionId INTEGER NOT NULL,createdBy TEXT NOT NULL,FOREIGN KEY (phoneNumber) REFERENCES users(phoneNumber) ON DELETE CASCADE,FOREIGN KEY (transactionId) REFERENCES transactions(tid) ON DELETE CASCADE,FOREIGN KEY (createdBy) REFERENCES users(phoneNumber) ON DELETE CASCADE,PRIMARY KEY(phoneNumber, transactionId))")
 		defer statement.Close()
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -162,7 +163,7 @@ func AddMember() gin.HandlerFunc {
 		err = database.QueryRow("SELECT COUNT(*) FROM members WHERE transactionId=?", newMember.TransactionId).Scan(&count)
 		err = database.QueryRow("SELECT amount FROM transactions WHERE tid=?", newMember.TransactionId).Scan(&amount)
 
-		statement, err = database.Prepare("INSERT INTO members (phoneNumber, amountToBePaid, transactionId) VALUES (?, ?, ?)")
+		statement, err = database.Prepare("INSERT INTO members (phoneNumber, amountToBePaid, transactionId, createdBy) VALUES (?, ?, ?, ?)")
 		defer statement.Close()
 
 		if err != nil {
@@ -170,7 +171,7 @@ func AddMember() gin.HandlerFunc {
 			return
 		}
 
-		_, err = statement.Exec(newMember.PhoneNumber, amount/(count+2), newMember.TransactionId)
+		_, err = statement.Exec(newMember.PhoneNumber, amount/(count+2), newMember.TransactionId, userPhoneNumber)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
@@ -196,12 +197,8 @@ func AddMember() gin.HandlerFunc {
 
 func ShowMembers() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var transaction models.Transaction
+		userPhoneNumber, _ := c.Get("phoneNumber")
 
-		if err := c.BindJSON(&transaction); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
 		database, err := config.ConnectDB()
 		defer database.Close()
 		if err != nil {
@@ -209,7 +206,7 @@ func ShowMembers() gin.HandlerFunc {
 			return
 		}
 
-		rows, err := database.Query("SELECT phoneNumber, amountToBePaid, transactionId FROM members WHERE transactionId = ?", &transaction.Id)
+		rows, err := database.Query("SELECT phoneNumber, amountToBePaid, transactionId FROM members WHERE createdBy = ?", userPhoneNumber)
 		defer rows.Close()
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

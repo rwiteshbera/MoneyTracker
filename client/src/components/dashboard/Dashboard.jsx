@@ -28,8 +28,9 @@ const Dashboard = () => {
   const [searchPhoneInput, setSeachPhoneInput] = useState("");
   const [searchMemberResult, setSearchMemberResult] = useState("");
   const [addButtonTextInModal, setAddButtonTextInModal] = useState("Add")
+  const [allMembers, setAllMembers] = useState([])
 
-  const [open, setOpen] = useState("0");
+  const [open, setOpen] = useState("1");
   const toggle = (id) => {
     if (open === id) {
       setOpen();
@@ -44,6 +45,7 @@ const Dashboard = () => {
     setModal(!modal)
     setSeachPhoneInput("")
     setSearchMemberResult("")
+    setAddButtonTextInModal("Add")
   };
 
   let authToken = localStorage.getItem("token");
@@ -115,6 +117,20 @@ const Dashboard = () => {
     }
   };
 
+
+  // Show members
+  const showMemebers = async (currentModalId, phone) => {
+    try {
+      const { data } = await axios.get(
+        "/show",
+        axiosConfig
+      );
+      setAllMembers(data.message)
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   // Logout the account
   const Logout = () => {
     localStorage.clear();
@@ -125,6 +141,7 @@ const Dashboard = () => {
     setFirstName(localStorage.getItem("firstname"));
     setLastName(localStorage.getItem("lastname"));
     getTransactionsList();
+    showMemebers();
   }, []);
 
   useEffect(() => {
@@ -178,6 +195,17 @@ const Dashboard = () => {
                       <Button className="addmember_btn" onClick={() => {toggleModal();setCurrentModalId(id)}}>
                         Add Member
                       </Button>
+
+                      {
+                        allMembers.map(({phone_number, amount_to_be_paid}, key) => {
+                          return (
+                              <>
+                                  <div>{phone_number}</div>
+                                  <div>{amount_to_be_paid}</div>
+                              </>
+                          );
+                        })
+            }
                     </AccordionBody>
                   </div>
                 </>
