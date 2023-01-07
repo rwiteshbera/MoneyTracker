@@ -1,7 +1,19 @@
 import React from "react";
 import { useState, useEffect } from "react";
 import "./Dashboard.css";
-import { Button, Container, Input } from "reactstrap";
+import {
+  Button,
+  Container,
+  Input,
+  Accordion,
+  AccordionBody,
+  AccordionHeader,
+  AccordionItem,
+  Modal,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+} from "reactstrap";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
@@ -11,9 +23,31 @@ const Dashboard = () => {
   const [firstname, setFirstName] = useState("");
   const [lastname, setLastName] = useState("");
   const [amount, setAmount] = useState("");
+  const [transactionName, setTransactionName] = useState("");
+  const [transactionList, setTransactionList] = useState([]);
+  const [searchPhoneInput, setSeachPhoneInput] = useState("");
+  const [searchMemberResult, setSearchMemberResult] = useState("");
+  const [addButtonTextInModal, setAddButtonTextInModal] = useState("Add")
+
+  const [open, setOpen] = useState("0");
+  const toggle = (id) => {
+    if (open === id) {
+      setOpen();
+    } else {
+      setOpen(id);
+    }
+  };
+
+  const [modal, setModal] = useState(false);
+  const [currentModalId, setCurrentModalId] = useState("")
+  const toggleModal = () => {
+    setModal(!modal)
+    setSeachPhoneInput("")
+    setSearchMemberResult("")
+  };
 
   let authToken = localStorage.getItem("token");
-  let phone = localStorage.getItem("phone")
+  let phone = localStorage.getItem("phone");
 
   // axios config
   const axiosConfig = {
@@ -26,9 +60,9 @@ const Dashboard = () => {
   // create new transaction
   const createTransaction = async () => {
     try {
-        if(!amount || !phone) {
-            return
-        }
+      if (!amount || !phone) {
+        return;
+      }
       const { data } = await axios.post(
         "/create",
         { createdBy: phone, amount: amount },
@@ -37,6 +71,47 @@ const Dashboard = () => {
       console.log(data);
     } catch (e) {
       console.log(e);
+    }
+  };
+
+  // Get a list of all transactions created by
+  const getTransactionsList = () => {
+    try {
+      axios.get("/get", axiosConfig).then((res) => {
+        setTransactionList(res.data?.message.reverse());
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  // Search memeber by phone number
+  const searchUser = async () => {
+    try {
+      const { data } = await axios.post(
+        "/search",
+        { phoneNumber: searchPhoneInput },
+        axiosConfig
+      );
+      setSearchMemberResult(data.user);
+      console.log(data.user);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  // Add memeber by phone number
+  const addMemeber = async (currentModalId, phone) => {
+    try {
+      const { data } = await axios.post(
+        "/add_member",
+        { phone_number: phone, transaction_id: currentModalId },
+        axiosConfig
+      );
+      setAddButtonTextInModal("Added")
+      console.log(data);
+    } catch (error) {
+      console.log(error);
     }
   };
 
@@ -49,7 +124,12 @@ const Dashboard = () => {
   useEffect(() => {
     setFirstName(localStorage.getItem("firstname"));
     setLastName(localStorage.getItem("lastname"));
+    getTransactionsList();
   }, []);
+
+  useEffect(() => {
+    getTransactionsList();
+  }, [transactionList]);
 
   return (
     <>
@@ -58,11 +138,19 @@ const Dashboard = () => {
           Hi, {firstname} {lastname}
         </h4>
         <div className="parent_box">
-          <div className="amount_box">
+          <div className="transaction_box">
+            <Input
+              type="text"
+              value={transactionName}
+              id="transaction_name_input"
+              placeholder="Enter transaction name"
+              onChange={(e) => setTransactionName(e.target.value)}
+            />
             <Input
               type="number"
               value={amount}
               id="input_amount"
+              placeholder="Transaction amount"
               onChange={(e) => setAmount(e.target.value)}
             />
             <Button color="success" onClick={createTransaction}>
@@ -73,7 +161,70 @@ const Dashboard = () => {
             </Button>
           </div>
         </div>
+        <div className="transaction_list">
+          <Accordion open={open} toggle={toggle}>
+            {transactionList.map(({ id, amount }, key) => {
+              return (
+                <>
+                  <div key={key}>
+                    <AccordionHeader targetId="1">
+                      Transaction Id: {id} | Amount: {amount}
+                    </AccordionHeader>
+                    <AccordionBody
+                      accordionId="1"
+                      className="tranasaction_accordion_body"
+                    >
+                      <strong>{amount}</strong>
+                      <Button className="addmember_btn" onClick={() => {toggleModal();setCurrentModalId(id)}}>
+                        Add Member
+                      </Button>
+                    </AccordionBody>
+                  </div>
+                </>
+              );
+            })}
+          </Accordion>
+        </div>
       </Container>
+
+      <Modal
+        isOpen={modal}
+        fade={false}
+        toggle={toggleModal}
+        className="search_modal"
+      >
+        <ModalHeader toggle={toggleModal}>Add Member</ModalHeader>
+        <ModalBody className="search_modal_body">
+          <div className="search_modal_cointainer">
+            <Input
+              type="text"
+              placeholder="Search phone"
+              value={searchPhoneInput}
+              onChange={(e) => setSeachPhoneInput(e.target.value)}
+            />
+            {searchPhoneInput.length === 10 && (
+              <Button onClick={searchUser}>Search</Button>
+            )}
+          </div>
+          {searchMemberResult.firstName !== undefined && (
+            <div className="search_member_result">
+              {searchMemberResult.firstName + " " + searchMemberResult.lastName}{" "}
+              <Button
+                className="modal_add_btn"
+                color="success"
+                onClick={() => addMemeber(currentModalId, searchPhoneInput)}
+              >
+                {addButtonTextInModal}
+              </Button>
+            </div>
+          )}
+        </ModalBody>
+        <ModalFooter>
+          <Button color="secondary" onClick={toggleModal}>
+            Cancel
+          </Button>
+        </ModalFooter>
+      </Modal>
     </>
   );
 };

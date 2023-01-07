@@ -1,10 +1,12 @@
 package controllers
 
 import (
+	"database/sql"
 	"github.com/gin-gonic/gin"
 	"github.com/rwiteshbera/MoneyTracker/config"
 	"github.com/rwiteshbera/MoneyTracker/models"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -18,6 +20,13 @@ func CreateTransaction() gin.HandlerFunc {
 			return
 		}
 
+		i, err := strconv.ParseUint(transaction.CreatedBy, 10, 64)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		transaction.Id = uint64(time.Now().Unix()) | i
 		database, err1 := config.ConnectDB()
 		defer database.Close()
 		if err1 != nil {
@@ -136,7 +145,7 @@ func AddMember() gin.HandlerFunc {
 			return
 		}
 
-		statement, err := database.Prepare("CREATE TABLE IF NOT EXISTS members (phoneNumber INTEGER NOT NULL,amountToBePaid INTEGER NOT NULL, transactionId INTEGER NOT NULL,FOREIGN KEY (phoneNumber) REFERENCES users(phoneNumber) ON DELETE CASCADE,FOREIGN KEY (transactionId) REFERENCES transactions(tid) ON DELETE CASCADE)")
+		statement, err := database.Prepare("CREATE TABLE IF NOT EXISTS members (phoneNumber INTEGER NOT NULL,amountToBePaid INTEGER NOT NULL, transactionId INTEGER NOT NULL,  FOREIGN KEY (phoneNumber) REFERENCES users(phoneNumber) ON DELETE CASCADE, FOREIGN KEY (transactionId) REFERENCES transactions(tid) ON DELETE CASCADE, PRIMARY KEY(phoneNumber, transactionId))")
 		defer statement.Close()
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -261,5 +270,46 @@ func DeleteMember() gin.HandlerFunc {
 func MarkAsPaid() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
+	}
+}
+
+// Function Search member by phone number
+func SearchMember() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var user models.User
+
+		if err := c.BindJSON(&user); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		database, err1 := config.ConnectDB()
+		defer database.Close()
+		if err1 != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err1.Error()})
+			return
+		}
+
+		if len(user.PhoneNumber) != 10 {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid phone number"})
+			return
+		}
+		statement, err := database.Prepare("SELECT firstName, lastName, phoneNumber FROM users WHERE phoneNumber = ?")
+		defer statement.Close()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		var savedUser models.User // Storing the saved user data in this instance
+		err = statement.QueryRow(user.PhoneNumber).Scan(&savedUser.FirstName, &savedUser.LastName, &savedUser.PhoneNumber)
+
+		// If no user found
+		if err == sql.ErrNoRows {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "No user found"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"user": savedUser})
 	}
 }

@@ -2,19 +2,56 @@
     text-align: center;
 }
 
+#transaction_name_input{
+    width: 20em;
+}
+
 #input_amount{
     width: 15em;
 }
 
-.amount_box{
-    margin-left: 35%;
+.transaction_box{
+    margin-left: 25%;
     display: flex;
 }
-.amount_box input {
+.transaction_box input {
     margin-right: 1em;
+    height: fit-content;
 }
 
 #logout_btn{
     position: absolute;
     right: 5%;
+}
+
+.transaction_list{
+    margin-top: 1rem;
+}
+
+.addmember_btn{
+    position: absolute;
+    right: 10rem;
+}
+
+.tranasaction_accordion_body{
+    margin-bottom: 1rem;
+}
+
+.search_modal_cointainer{
+    display: flex;
+}
+.search_modal_cointainer input{
+    margin-right: 1em;
+}
+
+.search_member_result{
+    margin-top: 0.2em;
+    margin-left: 0.5em;
+    font-weight: 600;
+}
+
+.modal_add_btn{
+    height: 20px;
+    margin: 0.6em 3em;
+    padding: 0em 0.8em 1.5em 0.8em;
 }

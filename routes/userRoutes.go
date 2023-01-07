@@ -15,4 +15,5 @@ func UserRoutes(incomingRoutes *gin.Engine) {
 	incomingRoutes.GET("/show", controllers.ShowMembers())            // Show members of a transaction
 	incomingRoutes.POST("/delete_member", controllers.DeleteMember()) // Delete a member from a transaction
 	incomingRoutes.POST("/mark", controllers.MarkAsPaid())            // Mark a member as paid
+	incomingRoutes.POST("/search", controllers.SearchMember())        // Search member by phone number
 }
