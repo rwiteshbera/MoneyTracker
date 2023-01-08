@@ -19,7 +19,8 @@ npm run dev
 ```
 
 #### Screenshots
-<img src="https://cloud.githubusercontent.com/assets/4307137/10105283/251b6868-63ae-11e5-9918-b789d9d682ec.png" width="45%"></img> <img src="https://cloud.githubusercontent.com/assets/4307137/10105290/2a183f3a-63ae-11e5-9380-50d9f6d8afd6.png" width="45%"></img> <img src="https://cloud.githubusercontent.com/assets/4307137/10105284/26aa7ad4-63ae-11e5-88b7-bc523a095c9f.png" width="45%"></img> <img src="https://cloud.githubusercontent.com/assets/4307137/10105288/28698fae-63ae-11e5-8ba7-a62360a8e8a7.png" width="45%"></img> <img src="https://cloud.githubusercontent.com/assets/4307137/10105283/251b6868-63ae-11e5-9918-b789d9d682ec.png" width="45%"></img> <img src="https://cloud.githubusercontent.com/assets/4307137/10105290/2a183f3a-63ae-11e5-9380-50d9f6d8afd6.png" width="45%"></img> 
+<img src="https://user-images.githubusercontent.com/73098407/211182952-bbaa450a-48d4-459e-8d44-a1e28d0831b0.png" width="45%"></img> <img src="https://user-images.githubusercontent.com/73098407/211182955-e9afe8ff-0700-42fc-8055-1886ad2bf925.png" width="45%"></img> <img src="https://user-images.githubusercontent.com/73098407/211182960-cabd2b81-68b7-4511-8a99-7aaa32f9fd4f.png" width="45%"></img> <img src="https://user-images.githubusercontent.com/73098407/211183001-9a2df307-350e-4e36-82f7-f8d3f275e5b4.png" width="45%"></img> 
+
 
 
 **NOTE**: Although I have done my best to implement as much as possible within the time available, it is possible that some bugs may be present in the project. I plan to continue working on improving the project.
