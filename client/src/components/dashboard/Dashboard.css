@@ -63,3 +63,7 @@
 #member_name_div{
     font-size: 1.1rem;
 }
+
+#delete_transaction_btn{
+    padding: 0.1em 0.5em;
+}

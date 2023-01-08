@@ -66,7 +66,12 @@ func CreateTransaction() gin.HandlerFunc {
 // Delete A transaction
 func DeleteTransaction() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var transactionId uint64
+		var transaction models.Transaction
+
+		if err := c.BindJSON(&transaction); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
 
 		database, err := config.ConnectDB()
 		defer database.Close()
@@ -81,7 +86,7 @@ func DeleteTransaction() gin.HandlerFunc {
 			return
 		}
 
-		_, err = statement.Exec(transactionId)
+		_, err = statement.Exec(transaction.Id)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 			return

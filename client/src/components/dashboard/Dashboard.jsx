@@ -81,14 +81,34 @@ const Dashboard = () => {
     }
   };
 
+  // Delete a transaction
+  const deleteTransaction =async (tid) => {
+    if(!tid) {
+      return
+    }
+    console.log(tid)
+    try{
+      const { data } = await axios.post(
+        "/delete",
+        { id: tid},
+        axiosConfig)
+        console.log(data)
+    } catch(e) {
+        console.log(e)
+    }
+  }
+
   // Get a list of all transactions created by
   const getTransactionsList = () => {
     try {
       axios.get("/get", axiosConfig).then((res) => {
-        if(res.data){
+        if(res.data.message){
           setTransactionList(res.data.message.reverse());
+        } else {
+          return
         }
       });
+      showMemebers();
     } catch (error) {
       console.log(error);
     }
@@ -157,7 +177,6 @@ const Dashboard = () => {
     setFirstName(localStorage.getItem("firstname"));
     setLastName(localStorage.getItem("lastname"));
     getTransactionsList();
-    showMemebers();
   }, []);
 
   useEffect(() => {
@@ -200,13 +219,16 @@ const Dashboard = () => {
               transactionList.map(({ id,transactionName, amount }, key) => {
                 return (
                   <AccordionItem key={key}>
+                    
                       <AccordionHeader targetId="1">
+                      
                         {transactionName} | Amount: {amount}
                       </AccordionHeader>
                       <AccordionBody
                         accordionId="1"
                         className="tranasaction_accordion_body"
                         >
+                          <Button id="delete_transaction_btn" onClick={()=> {deleteTransaction(id)}}>Delete Transaction</Button>
                         <Button
                           className="addmember_btn"
                           onClick={() => {
