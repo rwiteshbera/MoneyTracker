@@ -14,6 +14,7 @@ air
 
 Switch to `client` directory for React server. Install the dependencies and run it by using the following command.
 ```bash
+cd client
 npm install
 npm run dev
 ```
