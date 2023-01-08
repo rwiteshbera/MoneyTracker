@@ -7,6 +7,7 @@ import (
 	"github.com/rwiteshbera/MoneyTracker/models"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -33,7 +34,7 @@ func CreateTransaction() gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err1.Error()})
 			return
 		}
-		statement, err2 := database.Prepare("CREATE TABLE IF NOT EXISTS transactions (tid INTEGER NOT NULL,amount INTEGER NOT NULL,createdBy TEXT NOT NULL,FOREIGN KEY (createdBy) REFERENCES users(phoneNumber) ON DELETE CASCADE)")
+		statement, err2 := database.Prepare("CREATE TABLE IF NOT EXISTS transactions (tid INTEGER NOT NULL, transactionName TEXT NOT NULL, amount INTEGER NOT NULL,createdBy TEXT NOT NULL,FOREIGN KEY (createdBy) REFERENCES users(phoneNumber) ON DELETE CASCADE)")
 		if err2 != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err2.Error()})
 			return
@@ -44,7 +45,7 @@ func CreateTransaction() gin.HandlerFunc {
 			return
 		}
 
-		statement, err4 := database.Prepare("INSERT INTO transactions (tid, amount, createdBy) VALUES (?, ?, ?)")
+		statement, err4 := database.Prepare("INSERT INTO transactions (tid, transactionName, amount, createdBy) VALUES (?, ?, ?, ?)")
 		defer statement.Close()
 
 		if err4 != nil {
@@ -52,7 +53,7 @@ func CreateTransaction() gin.HandlerFunc {
 			return
 		}
 
-		_, err5 := statement.Exec(transaction.Id, transaction.Amount, transaction.CreatedBy)
+		_, err5 := statement.Exec(transaction.Id, transaction.TransactionName, transaction.Amount, transaction.CreatedBy)
 		if err5 != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err5.Error()})
 			return
@@ -101,7 +102,7 @@ func ShowTransactions() gin.HandlerFunc {
 			return
 		}
 
-		rows, err := database.Query("SELECT tid, amount, createdBy FROM transactions WHERE createdBy = ?", userPhoneNumber)
+		rows, err := database.Query("SELECT tid, transactionName, amount, createdBy FROM transactions WHERE createdBy = ?", userPhoneNumber)
 		defer rows.Close()
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -110,14 +111,14 @@ func ShowTransactions() gin.HandlerFunc {
 
 		var transactions []models.Transaction
 		for rows.Next() {
-			var transaction models.Transaction
+			var transactionCreatedByU models.Transaction
 
-			err := rows.Scan(&transaction.Id, &transaction.Amount, &transaction.CreatedBy)
+			err := rows.Scan(&transactionCreatedByU.Id, &transactionCreatedByU.TransactionName, &transactionCreatedByU.Amount, &transactionCreatedByU.CreatedBy)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 				return
 			}
-			transactions = append(transactions, transaction)
+			transactions = append(transactions, transactionCreatedByU)
 		}
 
 		err = rows.Err()
@@ -139,6 +140,7 @@ func AddMember() gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
+
 		database, err1 := config.ConnectDB()
 		defer database.Close()
 		if err1 != nil {
@@ -146,7 +148,7 @@ func AddMember() gin.HandlerFunc {
 			return
 		}
 
-		statement, err := database.Prepare("CREATE TABLE IF NOT EXISTS members (phoneNumber INTEGER NOT NULL,amountToBePaid INTEGER NOT NULL,transactionId INTEGER NOT NULL,createdBy TEXT NOT NULL,FOREIGN KEY (phoneNumber) REFERENCES users(phoneNumber) ON DELETE CASCADE,FOREIGN KEY (transactionId) REFERENCES transactions(tid) ON DELETE CASCADE,FOREIGN KEY (createdBy) REFERENCES users(phoneNumber) ON DELETE CASCADE,PRIMARY KEY(phoneNumber, transactionId))")
+		statement, err := database.Prepare("CREATE TABLE IF NOT EXISTS members (phoneNumber INTEGER NOT NULL, firstname TEXT NOT NULL, lastname TEXT NOT NULL, amountToBePaid INTEGER NOT NULL,transactionId INTEGER NOT NULL,createdBy TEXT NOT NULL,FOREIGN KEY (phoneNumber) REFERENCES users(phoneNumber) ON DELETE CASCADE,FOREIGN KEY (transactionId) REFERENCES transactions(tid) ON DELETE CASCADE,FOREIGN KEY (createdBy) REFERENCES users(phoneNumber) ON DELETE CASCADE,PRIMARY KEY(phoneNumber, transactionId))")
 		defer statement.Close()
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -163,7 +165,7 @@ func AddMember() gin.HandlerFunc {
 		err = database.QueryRow("SELECT COUNT(*) FROM members WHERE transactionId=?", newMember.TransactionId).Scan(&count)
 		err = database.QueryRow("SELECT amount FROM transactions WHERE tid=?", newMember.TransactionId).Scan(&amount)
 
-		statement, err = database.Prepare("INSERT INTO members (phoneNumber, amountToBePaid, transactionId, createdBy) VALUES (?, ?, ?, ?)")
+		statement, err = database.Prepare("INSERT INTO members (phoneNumber, firstname, lastname, amountToBePaid, transactionId, createdBy) VALUES (?, ?, ?, ?, ?, ?)")
 		defer statement.Close()
 
 		if err != nil {
@@ -171,10 +173,16 @@ func AddMember() gin.HandlerFunc {
 			return
 		}
 
-		_, err = statement.Exec(newMember.PhoneNumber, amount/(count+2), newMember.TransactionId, userPhoneNumber)
+		_, err = statement.Exec(newMember.PhoneNumber, newMember.FirstName, newMember.LastName, amount/(count+2), newMember.TransactionId, userPhoneNumber)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
+			// If member already exists
+			if strings.Contains(err.Error(), "UNIQUE constraint failed") {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Member already exists in this transaction."})
+				return
+			} else {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
 		}
 
 		//UPDATE members SET amountToBePaid = ?
@@ -206,7 +214,7 @@ func ShowMembers() gin.HandlerFunc {
 			return
 		}
 
-		rows, err := database.Query("SELECT phoneNumber, amountToBePaid, transactionId FROM members WHERE createdBy = ?", userPhoneNumber)
+		rows, err := database.Query("SELECT phoneNumber, firstname, lastname, amountToBePaid, transactionId FROM members WHERE createdBy = ?", userPhoneNumber)
 		defer rows.Close()
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -217,7 +225,7 @@ func ShowMembers() gin.HandlerFunc {
 		for rows.Next() {
 			var member models.Member
 
-			err := rows.Scan(&member.PhoneNumber, &member.AmountToBePaid, &member.TransactionId)
+			err := rows.Scan(&member.PhoneNumber, &member.FirstName, &member.LastName, &member.AmountToBePaid, &member.TransactionId)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 				return

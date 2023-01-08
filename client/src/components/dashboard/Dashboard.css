@@ -34,7 +34,7 @@
 }
 
 .tranasaction_accordion_body{
-    margin-bottom: 1rem;
+    margin-bottom: 2rem;
 }
 
 .search_modal_cointainer{
@@ -54,4 +54,12 @@
     height: 20px;
     margin: 0.6em 3em;
     padding: 0em 0.8em 1.5em 0.8em;
+}
+
+#add_member_message{
+    color: red;
+}
+
+#member_name_div{
+    font-size: 1.1rem;
 }

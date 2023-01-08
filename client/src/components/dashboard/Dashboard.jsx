@@ -19,6 +19,8 @@ import axios from "axios";
 
 const Dashboard = () => {
   let navigate = useNavigate();
+ 
+
 
   const [firstname, setFirstName] = useState("");
   const [lastname, setLastName] = useState("");
@@ -27,10 +29,11 @@ const Dashboard = () => {
   const [transactionList, setTransactionList] = useState([]);
   const [searchPhoneInput, setSeachPhoneInput] = useState("");
   const [searchMemberResult, setSearchMemberResult] = useState("");
-  const [addButtonTextInModal, setAddButtonTextInModal] = useState("Add")
-  const [allMembers, setAllMembers] = useState([])
+  const [addMemberMessage, setAddMemberMessage] = useState("");
+  const [addButtonTextInModal, setAddButtonTextInModal] = useState("Add");
+  const [allMembers, setAllMembers] = useState([]);
 
-  const [open, setOpen] = useState("1");
+  const [open, setOpen] = useState('1');
   const toggle = (id) => {
     if (open === id) {
       setOpen();
@@ -40,12 +43,14 @@ const Dashboard = () => {
   };
 
   const [modal, setModal] = useState(false);
-  const [currentModalId, setCurrentModalId] = useState("")
+  const [currentModalId, setCurrentModalId] = useState("");
   const toggleModal = () => {
-    setModal(!modal)
-    setSeachPhoneInput("")
-    setSearchMemberResult("")
-    setAddButtonTextInModal("Add")
+    setModal(!modal);
+    setSeachPhoneInput("");
+    setSearchMemberResult("");
+    setAddButtonTextInModal("Add");
+    setAddMemberMessage("");
+
   };
 
   let authToken = localStorage.getItem("token");
@@ -62,12 +67,12 @@ const Dashboard = () => {
   // create new transaction
   const createTransaction = async () => {
     try {
-      if (!amount || !phone) {
+      if (!transactionName || !amount || !phone) {
         return;
       }
       const { data } = await axios.post(
         "/create",
-        { createdBy: phone, amount: amount },
+        { transactionName: transactionName,createdBy: phone, amount: amount },
         axiosConfig
       );
       console.log(data);
@@ -80,7 +85,9 @@ const Dashboard = () => {
   const getTransactionsList = () => {
     try {
       axios.get("/get", axiosConfig).then((res) => {
-        setTransactionList(res.data?.message.reverse());
+        if(res.data){
+          setTransactionList(res.data.message.reverse());
+        }
       });
     } catch (error) {
       console.log(error);
@@ -103,29 +110,38 @@ const Dashboard = () => {
   };
 
   // Add memeber by phone number
-  const addMemeber = async (currentModalId, phone) => {
+  const addMemeber = async (currentModalId, phoneInput, firstname, lastname) => {
+    if (!currentModalId || !phoneInput || !firstname || !lastname) {
+      return;
+    }
+    if(phoneInput === phone) {
+      setAddMemberMessage("You can't add yourself");
+    }
     try {
       const { data } = await axios.post(
         "/add_member",
-        { phone_number: phone, transaction_id: currentModalId },
+        {
+          phone_number: phoneInput,
+          first_name: firstname,
+          last_name: lastname,
+          transaction_id: currentModalId,
+        },
         axiosConfig
       );
-      setAddButtonTextInModal("Added")
-      console.log(data);
+      setAddButtonTextInModal("Added");
+      setAddMemberMessage("");
     } catch (error) {
-      console.log(error);
+      setAddMemberMessage(error.response?.data.error);
     }
   };
-
 
   // Show members
   const showMemebers = async (currentModalId, phone) => {
     try {
-      const { data } = await axios.get(
-        "/show",
-        axiosConfig
-      );
-      setAllMembers(data.message)
+      const { data } = await axios.get("/show", axiosConfig);
+      if (data.message) {
+        setAllMembers(data.message);
+      }
     } catch (error) {
       console.log(error);
     }
@@ -180,40 +196,55 @@ const Dashboard = () => {
         </div>
         <div className="transaction_list">
           <Accordion open={open} toggle={toggle}>
-            {transactionList.map(({ id, amount }, key) => {
-              return (
-                <>
-                  <div key={key}>
-                    <AccordionHeader targetId="1">
-                      Transaction Id: {id} | Amount: {amount}
-                    </AccordionHeader>
-                    <AccordionBody
-                      accordionId="1"
-                      className="tranasaction_accordion_body"
-                    >
-                      <strong>{amount}</strong>
-                      <Button className="addmember_btn" onClick={() => {toggleModal();setCurrentModalId(id)}}>
-                        Add Member
-                      </Button>
-
-                      {
-                        allMembers.map(({phone_number, amount_to_be_paid}, key) => {
-                          return (
-                              <>
-                                  <div>{phone_number}</div>
-                                  <div>{amount_to_be_paid}</div>
-                              </>
-                          );
-                        })
+            {
+              transactionList.map(({ id,transactionName, amount }, key) => {
+                return (
+                  <AccordionItem key={key}>
+                      <AccordionHeader targetId="1">
+                        {transactionName} | Amount: {amount}
+                      </AccordionHeader>
+                      <AccordionBody
+                        accordionId="1"
+                        className="tranasaction_accordion_body"
+                        >
+                        <Button
+                          className="addmember_btn"
+                          onClick={() => {
+                            toggleModal();
+                            setCurrentModalId(id);
+                          }}
+                        >
+                          Add Member
+                        </Button>
+  
+                        {allMembers.map(
+                          (
+                            { phone_number,first_name, last_name, amount_to_be_paid, transaction_id },
+                            key
+                          ) => {
+                            if (id === transaction_id) {
+                              return (
+                                <>
+                                  <div key={key} id="member_name_div">
+                                    <div>{first_name} {last_name} |  Rs.{amount_to_be_paid}/- </div>
+                                  </div>
+                                </>
+                              );
+                            }
+                          }
+                        )}
+                      </AccordionBody>
+                  </AccordionItem>
+                );
+              }
+              )
             }
-                    </AccordionBody>
-                  </div>
-                </>
-              );
-            })}
           </Accordion>
         </div>
       </Container>
+
+          
+          
 
       <Modal
         isOpen={modal}
@@ -240,12 +271,20 @@ const Dashboard = () => {
               <Button
                 className="modal_add_btn"
                 color="success"
-                onClick={() => addMemeber(currentModalId, searchPhoneInput)}
+                onClick={() =>
+                  addMemeber(
+                    currentModalId,
+                    searchPhoneInput,
+                    searchMemberResult.firstName,
+                    searchMemberResult.lastName
+                  )
+                }
               >
                 {addButtonTextInModal}
               </Button>
             </div>
           )}
+          <p id="add_member_message">{addMemberMessage}</p>
         </ModalBody>
         <ModalFooter>
           <Button color="secondary" onClick={toggleModal}>
