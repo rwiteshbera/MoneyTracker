@@ -32,9 +32,11 @@ const Signup = () => {
       const {data} = await axios.post("/signup", 
       {firstName : firstname, lastName : lastname, phoneNumber : phoneNumber, password : password}, axiosConfig)
 
+        console.log(data)
       setMessage("Registration Successful!")
     }catch(err) {
       setMessage("User with this phone number number already exists")
+        console.log(err)
     }
   }
 

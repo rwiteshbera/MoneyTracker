@@ -7,6 +7,10 @@ The root folder contains `go` server. Create a `.env` and add the PORT.
 PORT=5000
 ```
 
+Add server base url in .env file `client` folder.
+```dotenv
+VITE_SERVER_BASE_URL=
+```
 Use the following command to start the server.
 ```bash
 air
