@@ -1,8 +1,11 @@
 ### Money Tracker
 
 #### Project Setup
-
-The root folder contains `go` server. Create a `.env` and add the PORT.
+Clone the repository using the following command to create a local setup.
+```bash
+git clone git@github.com:rwiteshbera/MoneyTracker.git
+```
+Switch to he root folder that contains `go` server. Create a `.env` and add the PORT.
 ```.env
 PORT=5000
 ```
