@@ -292,7 +292,6 @@ func SearchMember() gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-
 		database, err1 := config.ConnectDB()
 		defer database.Close()
 		if err1 != nil {
